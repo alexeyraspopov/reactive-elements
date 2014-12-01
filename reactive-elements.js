@@ -500,6 +500,9 @@ module.exports = observable;
 })(window.fastdom);
 
 },{}],3:[function(require,module,exports){
+// todo: class binding
+// todo: two-way binding
+// todo: events
 var data = require('./data'),
 	walk = require('./walk'),
 	fastdom = require('./fastdom');
@@ -524,10 +527,6 @@ function registerElement(tagName, options){
 		}.bind(this), {});
 
 		options.viewModel(this.vm);
-		console.log(this.vm);
-		/*this.vm.mapped = this.vm.greetPerson.map(function(value){
-			return value + '_mapped';
-		});*/
 	};
 
 	Element.attachedCallback = function(){

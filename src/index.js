@@ -1,3 +1,6 @@
+// todo: class binding
+// todo: two-way binding
+// todo: events
 var data = require('./data'),
 	walk = require('./walk'),
 	fastdom = require('./fastdom');
