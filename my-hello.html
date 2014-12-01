@@ -1,0 +1,22 @@
+<template>
+	<style type="text/css">
+		span{ color: blue; }
+	</style>
+
+	<span data-key="greetPerson">Hello, <!-- mapped --></span>
+</template>
+
+<script src="reactive-elements.js"></script>
+<script>
+	function GreetViewModel(vm){
+		// vm.greetPerson = attr('data-greet-person')
+
+		vm.mapped = vm.greetPerson.map(function(value){
+			return value + '_mapped';
+		});
+	}
+
+	window.MyHello = ReactiveElement('my-hello', {
+		viewModel: GreetViewModel
+	});
+</script>

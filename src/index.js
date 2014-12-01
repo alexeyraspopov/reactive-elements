@@ -1,18 +1,8 @@
-<!-- todo: class binding -->
-<!-- todo: two-way binding -->
-<!-- todo: events -->
-<template>
-	<style type="text/css">
-		span{ color: blue; }
-	</style>
+var data = require('./data'),
+	walk = require('./walk'),
+	fastdom = require('./fastdom');
 
-	<span data-key="greetPerson">Hello, <!-- mapped --></span>
-</template>
-
-<script src="data.js"></script>
-<script src="walk.js"></script>
-<script src="fastdom.js"></script>
-<script>
+function registerElement(tagName, options){
 	var Element = Object.create(HTMLElement.prototype);
 
 	var elementDoc = document.currentScript.ownerDocument;
@@ -27,20 +17,18 @@
 		shadow.appendChild(content);
 
 		this.vm = Object.keys(this.dataset).reduce(function(vm, key){
-			vm[key] = window.observable(this.dataset[key]);
+			vm[key] = data(this.dataset[key]);
 			return vm;
 		}.bind(this), {});
 
-		this.vm.mapped = this.vm.greetPerson.map(function(value){
-			return value + '_mapped';
-		});
+		options.viewModel(this.vm);
 	};
 
 	Element.attachedCallback = function(){
 		var root = this.shadowRoot,
 			vm = this.vm;
 
-		window.walk(root, function(node, next){
+		walk(root, function(node, next){
 			if(node instanceof HTMLElement && node !== root){
 				Object.keys(node.dataset).forEach(function(attr){
 					var model = node.dataset[attr];
@@ -86,5 +74,7 @@
 		}
 	};
 
-	window.XHello = document.registerElement('x-hello', { prototype: Element });
-</script>
+	return document.registerElement(tagName, { prototype: Element });
+}
+
+window.ReactiveElement = registerElement;
