@@ -3,7 +3,7 @@
 		span{ color: blue; }
 	</style>
 
-	<span data-key="greetPerson">Hello, <!-- mapped --></span>
+	<span data-key="greetPerson">Hello, <!-- mapped -->! here some data for you: <!-- boo --></span>
 </template>
 
 <script src="reactive-elements.js"></script>
@@ -11,8 +11,12 @@
 	function GreetViewModel(vm, v){
 		vm.greetPerson = v.attr('data-greet-person');
 
+		vm.boo = v.data(13);
+
 		vm.mapped = vm.greetPerson.map(function(value){
-			return value + '_mapped';
+			return value && value.replace(/^(.)/, function(match){
+				return match.toUpperCase();
+			});
 		});
 	}
 

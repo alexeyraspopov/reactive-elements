@@ -556,6 +556,18 @@ var data = require('observable'),
 	walk = require('dom-walker'),
 	fastdom = require('fastdom');
 
+var View = {
+	attr: function(name){
+		return this.attributes.filter(function(attr){
+			return attr && attr.name === name;
+		}).map(function(attr){
+			// fixme: correct observable mapping
+			return attr && attr.value;
+		});
+	},
+	data: data
+}
+
 function elementTemplate(){
 	var elementDoc = document.currentScript.ownerDocument,
 		template = elementDoc.querySelector('template').content;
@@ -565,17 +577,8 @@ function elementTemplate(){
 
 function registerElement(tagName, options){
 	var Element = Object.create(HTMLElement.prototype),
-		template = elementTemplate(),
-		view = {}, attributes = data();
-
-	view.attr = function(attribute){
-		return attributes.filter(function(attr){
-			return attr && attr.name === attribute;
-		}).map(function(attr){
-			// fixme: correct observable mapping
-			return attr && attr.value;
-		});
-	};
+		view = Object.create(View, { attributes: { value: data() } }),
+		template = elementTemplate();
 
 	Element.createdCallback = function(){
 		var shadow = this.createShadowRoot(),
@@ -583,11 +586,11 @@ function registerElement(tagName, options){
 
 		shadow.appendChild(content);
 
-		this.vm = {};
+		this.vm = Object.create(null);
 
 		options.viewModel(this.vm, view);
 
-		Array.prototype.slice.call(this.attributes).forEach(attributes);
+		Array.prototype.slice.call(this.attributes).forEach(view.attributes);
 	};
 
 	Element.attachedCallback = function(){
@@ -634,8 +637,8 @@ function registerElement(tagName, options){
 		// destroy all this shit
 	};
 
-	Element.attributeChangedCallback = function(attr, oldValue, newValue){
-		attributes(this.attributes[attr]);
+	Element.attributeChangedCallback = function(attr){
+		view.attributes(this.attributes[attr]);
 	};
 
 	return document.registerElement(tagName, { prototype: Element });
