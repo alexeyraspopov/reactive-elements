@@ -6,6 +6,7 @@ var data = require('observable'),
 	fastdom = require('fastdom');
 
 var View = {
+	attributes: data(),
 	attr: function(name){
 		return this.attributes.filter(function(attr){
 			return attr.name === name;
@@ -14,7 +15,7 @@ var View = {
 		});
 	},
 	data: data
-}
+};
 
 function elementTemplate(){
 	var elementDoc = document.currentScript.ownerDocument,
@@ -25,7 +26,6 @@ function elementTemplate(){
 
 function registerElement(tagName, options){
 	var Element = Object.create(HTMLElement.prototype),
-		view = Object.create(View, { attributes: { value: data() } }),
 		template = elementTemplate();
 
 	Element.createdCallback = function(){
@@ -35,10 +35,11 @@ function registerElement(tagName, options){
 		shadow.appendChild(content);
 
 		this.vm = Object.create(null);
+		this.view = Object.create(View, { attributes: { value: data() } });
 
-		options.viewModel(this.vm, view);
+		options.viewModel(this.vm, this.view);
 
-		Array.prototype.slice.call(this.attributes).forEach(view.attributes);
+		Array.prototype.slice.call(this.attributes).forEach(this.view.attributes);
 	};
 
 	Element.attachedCallback = function(){
@@ -86,7 +87,7 @@ function registerElement(tagName, options){
 	};
 
 	Element.attributeChangedCallback = function(attr){
-		view.attributes(this.attributes[attr]);
+		this.view.attributes(this.attributes[attr]);
 	};
 
 	return document.registerElement(tagName, { prototype: Element });
