@@ -555,12 +555,48 @@ module.exports = function(){
 };
 
 },{}],5:[function(require,module,exports){
+'use strict';
+
+var fastdom = require('fastdom');
+
+exports.attributes = function(node, viewModel){
+	Object.keys(node.dataset).forEach(function(attr){
+		var model = node.dataset[attr];
+
+		// todo: check observable existence
+		viewModel[model].bind(function(value){
+			fastdom.write(function(){
+				// todo: update correct attr (data-*)?
+				node.setAttribute(attr, value);
+			});
+		});
+	});
+};
+
+exports.content = function(node, viewModel){
+	var key = node.textContent.trim(),
+		text = document.createTextNode('');
+
+	// todo: check observable existence
+	viewModel[key].bind(function(value){
+		fastdom.write(function(){
+			text.textContent = value;
+		});
+	});
+
+	fastdom.write(function(){
+		node.parentNode.insertBefore(text, node);
+		node.parentNode.removeChild(node);
+	});
+};
+
+},{"fastdom":2}],6:[function(require,module,exports){
 // todo: class binding
 // todo: two-way binding
 // todo: events
 var data = require('observable'),
 	walk = require('dom-walker'),
-	fastdom = require('fastdom');
+	binding = require('./binding');
 
 var View = {
 	attributes: data(),
@@ -591,48 +627,25 @@ function registerElement(tagName, options){
 
 		shadow.appendChild(content);
 
-		this.vm = Object.create(null);
+		this.viewModel = Object.create(null);
 		this.view = Object.create(View, { attributes: { value: data() } });
 
-		options.viewModel(this.vm, this.view);
+		options.viewModel(this.viewModel, this.view);
 
 		Array.prototype.slice.call(this.attributes).forEach(this.view.attributes);
 	};
 
 	Element.attachedCallback = function(){
 		var root = this.shadowRoot,
-			vm = this.vm;
+			viewModel = this.viewModel;
 
 		walk(root, function(node, next){
 			if(node instanceof HTMLElement && node !== root){
-				Object.keys(node.dataset).forEach(function(attr){
-					var model = node.dataset[attr];
-
-					// todo: check observable existence
-					vm[model].bind(function(value){
-						fastdom.write(function(){
-							// todo: update correct attr (data-*)?
-							node.setAttribute(attr, value);
-						});
-					});
-				});
+				binding.attributes(node, viewModel);
 			}
 
 			if(node instanceof Comment){
-				var key = node.textContent.trim(),
-					text = document.createTextNode('');
-
-				// todo: check observable existence
-				vm[key].bind(function(value){
-					fastdom.write(function(){
-						text.textContent = value;
-					});
-				});
-
-				fastdom.write(function(){
-					node.parentNode.insertBefore(text, node);
-					node.parentNode.removeChild(node);
-				});
+				binding.content(node, viewModel);
 			}
 
 			next();
@@ -651,4 +664,4 @@ function registerElement(tagName, options){
 }
 
 window.ReactiveElement = registerElement;
-},{"dom-walker":1,"fastdom":2,"observable":3}]},{},[5]);
+},{"./binding":5,"dom-walker":1,"observable":3}]},{},[6]);
