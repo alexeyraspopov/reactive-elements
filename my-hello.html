@@ -8,8 +8,8 @@
 
 <script src="reactive-elements.js"></script>
 <script>
-	function GreetViewModel(vm){
-		// vm.greetPerson = attr('data-greet-person')
+	function GreetViewModel(vm, v){
+		vm.greetPerson = v.attr('data-greet-person');
 
 		vm.mapped = vm.greetPerson.map(function(value){
 			return value + '_mapped';

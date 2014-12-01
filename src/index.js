@@ -14,7 +14,17 @@ function elementTemplate(){
 
 function registerElement(tagName, options){
 	var Element = Object.create(HTMLElement.prototype),
-		template = elementTemplate();
+		template = elementTemplate(),
+		view = {}, attributes = data();
+
+	view.attr = function(attribute){
+		return attributes.filter(function(attr){
+			return attr && attr.name === attribute;
+		}).map(function(attr){
+			// fixme: correct observable mapping
+			return attr && attr.value;
+		});
+	};
 
 	Element.createdCallback = function(){
 		var shadow = this.createShadowRoot(),
@@ -22,12 +32,11 @@ function registerElement(tagName, options){
 
 		shadow.appendChild(content);
 
-		this.vm = Object.keys(this.dataset).reduce(function(vm, key){
-			vm[key] = data(this.dataset[key]);
-			return vm;
-		}.bind(this), {});
+		this.vm = {};
 
-		options.viewModel(this.vm);
+		options.viewModel(this.vm, view);
+
+		Array.prototype.slice.call(this.attributes).forEach(attributes);
 	};
 
 	Element.attachedCallback = function(){
@@ -39,6 +48,7 @@ function registerElement(tagName, options){
 				Object.keys(node.dataset).forEach(function(attr){
 					var model = node.dataset[attr];
 
+					// todo: check observable existence
 					vm[model].bind(function(value){
 						fastdom.write(function(){
 							// todo: update correct attr (data-*)?
@@ -52,6 +62,7 @@ function registerElement(tagName, options){
 				var key = node.textContent.trim(),
 					text = document.createTextNode('');
 
+				// todo: check observable existence
 				vm[key].bind(function(value){
 					fastdom.write(function(){
 						text.textContent = value;
@@ -73,11 +84,7 @@ function registerElement(tagName, options){
 	};
 
 	Element.attributeChangedCallback = function(attr, oldValue, newValue){
-		if(/^data-/.test(attr)){
-			this.vm[attr.split('-').slice(1).join('-').replace(/\-(.)/g, function(_, letter){
-				return letter.toUpperCase();
-			})](newValue);
-		}
+		attributes(this.attributes[attr]);
 	};
 
 	return document.registerElement(tagName, { prototype: Element });
