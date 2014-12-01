@@ -1,9 +1,9 @@
 // todo: class binding
 // todo: two-way binding
 // todo: events
-var data = require('./data'),
-	walk = require('./walk'),
-	fastdom = require('./fastdom');
+var data = require('observable'),
+	walk = require('dom-walker'),
+	fastdom = require('fastdom');
 
 function registerElement(tagName, options){
 	var Element = Object.create(HTMLElement.prototype);

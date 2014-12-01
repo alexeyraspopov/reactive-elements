@@ -1,91 +1,37 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* jshint browser:true */
 'use strict';
-function unsubscribe(subscribers, callback){
-	return function(){
-		var index = subscribers.indexOf(callback);
 
-		if(index > -1){
-			subscribers.splice(index, 1);
-		}
+function createTreeWalker(root, acceptNode, whatToShow){
+	acceptNode = acceptNode || function(){ return NodeFilter.FILTER_ACCEPT; };
+	whatToShow = whatToShow || NodeFilter.SHOW_ELEMENT;
+
+	return document.createTreeWalker(root, whatToShow, { acceptNode: acceptNode }, false);
+}
+
+function createIterator(walker, next){
+	return function iterator(direction){
+		var node = direction === 'sibling' ? walker.nextSibling() : walker.nextNode();
+
+		return next(node, iterator);
 	};
 }
 
-function noop(){}
+module.exports = function(root, process, options){
+	var walker;
 
-function newsletter(){
-	var subscribers = [];
+	options = options || {};
+	walker = createTreeWalker(root, options.acceptNode, options.whatToShow);
 
-	return {
-		subscribe: function(callback){
-			if(subscribers.indexOf(callback) < 0){
-				subscribers.unshift(callback);
+	function next(node, iterator){
+		return node && process(node, iterator);
+	}
 
-				return unsubscribe(subscribers, callback);
-			}
-
-			return noop;
-		},
-		publish: function(data){
-			var index = subscribers.length;
-
-			while(--index >= 0){
-				subscribers[index](data);
-			}
-		}
-	};
+	next(walker.currentNode, createIterator(walker, next));
 };
 
-function observable(value){
-	var cell, subscription = newsletter(value);
-
-	cell = function(newValue){
-		if(arguments.length){
-			value = newValue;
-			subscription.publish(value);
-		}
-
-		return value;
-	};
-
-	cell.subscribe = subscription.subscribe;
-
-	cell.bind = function(observable){
-		cell.subscribe(observable);
-		observable(value);
-
-		return observable;
-	};
-
-	cell.map = function(morphism){
-		var mappedObservable = observable(morphism(value));
-
-		cell.subscribe(function(value){
-			return mappedObservable(morphism(value));
-		});
-
-		return mappedObservable;
-	};
-
-	cell.filter = function(predicate){
-		var filteredObservable = predicate(value) ? observable(value) : observable();
-
-		cell.subscribe(function(value){
-			return predicate(value) && filteredObservable(value);
-		});
-
-		return filteredObservable;
-	};
-
-	cell.toString = function(){
-		return 'Data(' + value + ')';
-	};
-
-	return cell;
-}
-
-module.exports = observable;
-
 },{}],2:[function(require,module,exports){
+
 /**
  * FastDom
  *
@@ -106,6 +52,17 @@ module.exports = observable;
     || window.mozRequestAnimationFrame
     || window.msRequestAnimationFrame
     || function(cb) { return window.setTimeout(cb, 1000 / 60); };
+
+  // Normalize cAF
+  var caf = window.cancelAnimationFrame
+    || window.cancelRequestAnimationFrame
+    || window.mozCancelAnimationFrame
+    || window.mozCancelRequestAnimationFrame
+    || window.webkitCancelAnimationFrame
+    || window.webkitCancelRequestAnimationFrame
+    || window.msCancelAnimationFrame
+    || window.msCancelRequestAnimationFrame
+    || function(id) { window.clearTimeout(id); };
 
   /**
    * Creates a fresh
@@ -133,7 +90,7 @@ module.exports = observable;
 
   /**
    * Adds a job to the
-   * read batch and schedules
+   * write batch and schedules
    * a new frame if need be.
    *
    * @param  {Function} fn
@@ -414,7 +371,7 @@ module.exports = observable;
   };
 
   /**
-   * Starts a rAF loop
+   * Starts of a rAF loop
    * to empty the frame queue.
    *
    * @api private
@@ -500,12 +457,104 @@ module.exports = observable;
 })(window.fastdom);
 
 },{}],3:[function(require,module,exports){
+'use strict';
+var newsletter = require('newsletter');
+
+function observable(value){
+	var cell, subscription = newsletter();
+
+	cell = function(newValue){
+		if(arguments.length){
+			value = newValue;
+			subscription.publish(value);
+		}
+
+		return value;
+	};
+
+	cell.subscribe = subscription.subscribe;
+
+	cell.bind = function(continuation){
+		cell.subscribe(continuation);
+		continuation(value);
+
+		return continuation;
+	};
+
+	cell.map = function(morphism){
+		var mapped = observable(morphism(value));
+
+		cell.subscribe(function(value){
+			return mapped(morphism(value));
+		});
+
+		return mapped;
+	};
+
+	cell.filter = function(predicate){
+		var filtered = predicate(value) ? observable(value) : observable();
+
+		cell.subscribe(function(value){
+			return predicate(value) && filtered(value);
+		});
+
+		return filtered;
+	};
+
+	cell.toString = function(){
+		return 'Observable(' + value + ')';
+	};
+
+	return cell;
+}
+
+module.exports = observable;
+
+},{"newsletter":4}],4:[function(require,module,exports){
+'use strict';
+
+function unsubscribe(subscribers, callback){
+	return function(){
+		var index = subscribers.indexOf(callback);
+
+		if(index > -1){
+			subscribers.splice(index, 1);
+		}
+	};
+}
+
+function noop(){}
+
+module.exports = function(){
+	var subscribers = [];
+
+	return {
+		subscribe: function(callback){
+			if(subscribers.indexOf(callback) < 0){
+				subscribers.unshift(callback);
+
+				return unsubscribe(subscribers, callback);
+			}
+
+			return noop;
+		},
+		publish: function(data){
+			var index = subscribers.length;
+
+			while(--index >= 0){
+				subscribers[index](data);
+			}
+		}
+	};
+};
+
+},{}],5:[function(require,module,exports){
 // todo: class binding
 // todo: two-way binding
 // todo: events
-var data = require('./data'),
-	walk = require('./walk'),
-	fastdom = require('./fastdom');
+var data = require('observable'),
+	walk = require('dom-walker'),
+	fastdom = require('fastdom');
 
 function registerElement(tagName, options){
 	var Element = Object.create(HTMLElement.prototype);
@@ -583,36 +632,4 @@ function registerElement(tagName, options){
 }
 
 window.ReactiveElement = registerElement;
-},{"./data":1,"./fastdom":2,"./walk":4}],4:[function(require,module,exports){
-'use strict';
-function createTreeWalker(root, acceptNode, whatToShow){
-	acceptNode = acceptNode || function(){ return NodeFilter.FILTER_ACCEPT; };
-	whatToShow = whatToShow || NodeFilter.SHOW_ELEMENT;
-
-	return document.createTreeWalker(root, whatToShow, { acceptNode: acceptNode }, false);
-}
-
-function createIterator(walker, next){
-	return function iterator(direction){
-		var node = direction === 'sibling' ? walker.nextSibling() : walker.nextNode();
-
-		return next(node, iterator);
-	};
-}
-
-function walk(root, process, options){
-	var walker;
-
-	options = options || {};
-	walker = createTreeWalker(root, options.acceptNode, options.whatToShow);
-
-	function next(node, iterator){
-		return node && process(node, iterator);
-	}
-
-	next(walker.currentNode, createIterator(walker, next));
-};
-
-module.exports = walk;
-
-},{}]},{},[3]);
+},{"dom-walker":1,"fastdom":2,"observable":3}]},{},[5]);
