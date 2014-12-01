@@ -557,16 +557,13 @@ var data = require('observable'),
 	fastdom = require('fastdom');
 
 function registerElement(tagName, options){
-	var Element = Object.create(HTMLElement.prototype);
-
-	var elementDoc = document.currentScript.ownerDocument;
-
-	var template = elementDoc.querySelector('template').content;
+	var Element = Object.create(HTMLElement.prototype),
+		elementDoc = document.currentScript.ownerDocument,
+		template = elementDoc.querySelector('template').content;
 
 	Element.createdCallback = function(){
-		var shadow = this.createShadowRoot();
-
-		var content = document.importNode(template, true);
+		var shadow = this.createShadowRoot(),
+			content = document.importNode(template, true);
 
 		shadow.appendChild(content);
 
@@ -590,15 +587,15 @@ function registerElement(tagName, options){
 					vm[model].bind(function(value){
 						fastdom.write(function(){
 							// todo: update correct attr (data-*)?
-							node.setAttribute(attr, value)
+							node.setAttribute(attr, value);
 						});
 					});
 				});
 			}
 
 			if(node instanceof Comment){
-				var key = node.textContent.trim();
-				var text = document.createTextNode('');
+				var key = node.textContent.trim(),
+					text = document.createTextNode('');
 
 				vm[key].bind(function(value){
 					fastdom.write(function(){
