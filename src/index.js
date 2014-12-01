@@ -5,10 +5,16 @@ var data = require('observable'),
 	walk = require('dom-walker'),
 	fastdom = require('fastdom');
 
+function elementTemplate(){
+	var elementDoc = document.currentScript.ownerDocument,
+		template = elementDoc.querySelector('template').content;
+
+	return template;
+}
+
 function registerElement(tagName, options){
 	var Element = Object.create(HTMLElement.prototype),
-		elementDoc = document.currentScript.ownerDocument,
-		template = elementDoc.querySelector('template').content;
+		template = elementTemplate();
 
 	Element.createdCallback = function(){
 		var shadow = this.createShadowRoot(),
