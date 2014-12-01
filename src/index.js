@@ -8,10 +8,9 @@ var data = require('observable'),
 var View = {
 	attr: function(name){
 		return this.attributes.filter(function(attr){
-			return attr && attr.name === name;
+			return attr.name === name;
 		}).map(function(attr){
-			// fixme: correct observable mapping
-			return attr && attr.value;
+			return attr.value;
 		});
 	},
 	data: data

@@ -482,7 +482,9 @@ function observable(value){
 	};
 
 	cell.map = function(morphism){
-		var mapped = observable(morphism(value));
+		var mapped = observable();
+
+
 
 		cell.subscribe(function(value){
 			return mapped(morphism(value));
@@ -492,7 +494,11 @@ function observable(value){
 	};
 
 	cell.filter = function(predicate){
-		var filtered = predicate(value) ? observable(value) : observable();
+		var filtered = observable();
+
+		if(typeof value !== 'undefined' && predicate(value)){
+			filtered(value);
+		}
 
 		cell.subscribe(function(value){
 			return predicate(value) && filtered(value);
@@ -559,10 +565,9 @@ var data = require('observable'),
 var View = {
 	attr: function(name){
 		return this.attributes.filter(function(attr){
-			return attr && attr.name === name;
+			return attr.name === name;
 		}).map(function(attr){
-			// fixme: correct observable mapping
-			return attr && attr.value;
+			return attr.value;
 		});
 	},
 	data: data

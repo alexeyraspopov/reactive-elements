@@ -14,7 +14,7 @@
 		vm.boo = v.data(13);
 
 		vm.mapped = vm.greetPerson.map(function(value){
-			return value && value.replace(/^(.)/, function(match){
+			return value.replace(/^(.)/, function(match){
 				return match.toUpperCase();
 			});
 		});
