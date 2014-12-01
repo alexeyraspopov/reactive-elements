@@ -3,19 +3,8 @@
 // todo: events
 var data = require('observable'),
 	walk = require('dom-walker'),
+	View = require('./view'),
 	binding = require('./binding');
-
-var View = {
-	attributes: data(),
-	attr: function(name){
-		return this.attributes.filter(function(attr){
-			return attr.name === name;
-		}).map(function(attr){
-			return attr.value;
-		});
-	},
-	data: data
-};
 
 function elementTemplate(){
 	var elementDoc = document.currentScript.ownerDocument,
@@ -35,7 +24,10 @@ function registerElement(tagName, options){
 		shadow.appendChild(content);
 
 		this.viewModel = Object.create(null);
-		this.view = Object.create(View, { attributes: { value: data() } });
+		this.view = Object.create(View, {
+			attributes: { value: data() },
+			root: { value: this.shadowRoot }
+		});
 
 		options.viewModel(this.viewModel, this.view);
 

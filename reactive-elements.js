@@ -596,19 +596,8 @@ exports.content = function(node, viewModel){
 // todo: events
 var data = require('observable'),
 	walk = require('dom-walker'),
+	View = require('./view'),
 	binding = require('./binding');
-
-var View = {
-	attributes: data(),
-	attr: function(name){
-		return this.attributes.filter(function(attr){
-			return attr.name === name;
-		}).map(function(attr){
-			return attr.value;
-		});
-	},
-	data: data
-};
 
 function elementTemplate(){
 	var elementDoc = document.currentScript.ownerDocument,
@@ -628,7 +617,10 @@ function registerElement(tagName, options){
 		shadow.appendChild(content);
 
 		this.viewModel = Object.create(null);
-		this.view = Object.create(View, { attributes: { value: data() } });
+		this.view = Object.create(View, {
+			attributes: { value: data() },
+			root: { value: this.shadowRoot }
+		});
 
 		options.viewModel(this.viewModel, this.view);
 
@@ -664,4 +656,29 @@ function registerElement(tagName, options){
 }
 
 window.ReactiveElement = registerElement;
-},{"./binding":5,"dom-walker":1,"observable":3}]},{},[6]);
+},{"./binding":5,"./view":7,"dom-walker":1,"observable":3}],7:[function(require,module,exports){
+var data = require('observable');
+
+// should be provided
+exports.attributes = null;
+exports.root = null;
+
+exports.attr = function(name){
+	return this.attributes.filter(function(attr){
+		return attr.name === name;
+	}).map(function(attr){
+		return attr.value;
+	});
+};
+
+exports.event = function(elementName, eventName){
+	var element = this.root.querySelector('[name="' + elementName + '"]'),
+		eventStream = data();
+
+	element.addEventListener(eventName, eventStream, false);
+
+	return eventStream;
+};
+
+exports.data = data;
+},{"observable":3}]},{},[6]);

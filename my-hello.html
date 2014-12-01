@@ -4,14 +4,20 @@
 	</style>
 
 	<span data-key="greetPerson">Hello, <!-- mapped -->! here some data for you: <!-- boo --></span>
+	<button name="updateData">Update</button>
 </template>
 
 <script src="reactive-elements.js"></script>
 <script>
 	function GreetViewModel(vm, v){
 		vm.greetPerson = v.attr('data-greet-person');
+		vm.update = v.event('updateData', 'click');
 
 		vm.boo = v.data(13);
+
+		vm.update
+			.map(function(){ return 'new data'; })
+			.subscribe(vm.boo);
 
 		vm.mapped = vm.greetPerson.map(function(value){
 			return value.replace(/^(.)/, function(match){
