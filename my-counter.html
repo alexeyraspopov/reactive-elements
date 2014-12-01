@@ -1,0 +1,27 @@
+<template>
+	<p><!-- counter --></p>
+	<button name="up">Up</button>
+	<button name="down">Down</button>
+</template>
+
+<script src="reactive-elements.js"></script>
+<script>
+	function constant(value){
+		return function(){ return value; }
+	}
+
+	function sum(a, b){
+		return a + b;
+	}
+
+	function CounterViewModel(vm, v){
+		var up = v.event('up', 'click').map(constant(1)),
+			down = v.event('down', 'click').map(constant(-1));
+
+		vm.counter = up.concat(down).reduce(sum, 0);
+	}
+
+	window.MyCounter = ReactiveElement('my-counter', {
+		viewModel: CounterViewModel
+	});
+</script>

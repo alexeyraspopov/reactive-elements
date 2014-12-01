@@ -484,8 +484,6 @@ function observable(value){
 	cell.map = function(morphism){
 		var mapped = observable();
 
-
-
 		cell.subscribe(function(value){
 			return mapped(morphism(value));
 		});
@@ -505,6 +503,26 @@ function observable(value){
 		});
 
 		return filtered;
+	};
+
+	cell.concat = function(another){
+		// todo: bind?
+		var merged = observable(value);
+
+		cell.subscribe(merged);
+		another.subscribe(merged);
+
+		return merged;
+	};
+
+	cell.reduce = function(reducer, initial){
+		var reduced = observable(initial);
+
+		cell.map(function(value){
+			return reducer(reduced(), value);
+		}).subscribe(reduced);
+
+		return reduced;
 	};
 
 	cell.toString = function(){

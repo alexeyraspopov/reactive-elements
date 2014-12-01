@@ -9,21 +9,19 @@
 
 <script src="reactive-elements.js"></script>
 <script>
-	function GreetViewModel(vm, v){
-		vm.greetPerson = v.attr('data-greet-person');
-		vm.update = v.event('updateData', 'click');
-
-		vm.boo = v.data(13);
-
-		vm.update
-			.map(function(){ return 'new data'; })
-			.subscribe(vm.boo);
-
-		vm.mapped = vm.greetPerson.map(function(value){
-			return value.replace(/^(.)/, function(match){
-				return match.toUpperCase();
-			});
+	function capitalize(string){
+		return string.replace(/^(.)/, function(match){
+			return match.toUpperCase();
 		});
+	}
+
+	function GreetViewModel(vm, v){
+		var update = v.event('updateData', 'click').map(function(){ return 'new data'; });
+
+		vm.greetPerson = v.attr('data-greet-person');
+		vm.boo = v.data(13).concat(update);
+
+		vm.mapped = vm.greetPerson.map(capitalize);
 	}
 
 	window.MyHello = ReactiveElement('my-hello', {
